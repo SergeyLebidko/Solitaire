@@ -1,7 +1,7 @@
 import math
 import random
 
-from settings import pg, SOURCE_DIR, SUITS, RANKS
+from settings import pg, SOURCE_DIR, SUITS, RANKS, CARD_W, CARD_H, DECK_PLACE, STORAGE_PLACE, PLACE_COLOR
 
 
 class Card:
@@ -15,8 +15,8 @@ class Card:
             self.FACE_STATE: pg.image.load(f'{SOURCE_DIR}{rank}_{suit}.png'),
             self.SHIRT_STATE: pg.image.load(f'{SOURCE_DIR}shirt.png')
         }
-        self.rect = self._images['face'].get_rect()
-        self.state = self.FACE_STATE
+        self.rect = self._images[self.SHIRT_STATE].get_rect()
+        self.state = self.SHIRT_STATE
         self.z = 0
 
     @property
@@ -34,12 +34,31 @@ class Deck:
         random.shuffle(self.cards)
         for z, card in enumerate(self.cards, 0):
             card.z = z
+            card.rect.x, card.rect.y = DECK_PLACE
+        self.place_rect = pg.Rect(*DECK_PLACE, CARD_W, CARD_H)
+
+    def draw_place(self, surface):
+        if self.cards:
+            return
+        pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
+
+
+class Storage:
+
+    def __init__(self):
+        self.cards = []
+        self.place_rect = pg.Rect(*STORAGE_PLACE, CARD_W, CARD_H)
+
+    def draw_place(self, surface):
+        if self.cards:
+            return
+        pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
 
 
 class Animation:
     SPEED = 60
 
-    def __init__(self, card, x_final, y_final, delay=0, turn=False):
+    def __init__(self, card, x_final, y_final, destination, delay=0, turn=False):
         self.card = card
         x0, y0 = card.rect.x, card.rect.y
         r = math.sqrt((x0 - x_final) ** 2 + (y0 - y_final) ** 2)
@@ -63,6 +82,9 @@ class Animation:
         if turn:
             self.steps.append(dict(type='turn'))
 
+        # Добавляем обработку передачи объекту назначения
+        self.steps.append(dict(type='final', destination=destination))
+
     def next_step(self):
         if self.stop:
             return
@@ -72,6 +94,8 @@ class Animation:
             self.card.rect.x, self.card.rect.y = step['x'], step['y']
         elif step['type'] == 'turn':
             self.card.turn()
+        elif step['type'] == 'final':
+            step['destination'].accept(self.card)
 
     @property
     def stop(self):

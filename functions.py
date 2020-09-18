@@ -1,5 +1,23 @@
+from settings import BACKGROUND_COLOR
+
+
+def refresh_animations(animations):
+    tmp_animations = []
+    while animations:
+        animation = animations.pop()
+        animation.next_step()
+        if not animation.stop:
+            tmp_animations.append(animation)
+    animations.extend(tmp_animations)
+
+
 def draw_background(surface):
-    surface.fill((20, 120, 30))
+    surface.fill(BACKGROUND_COLOR)
+
+
+def draw_places(surface, places):
+    for place in places:
+        place.draw_place(surface)
 
 
 def draw_cards(surface, cards):
@@ -16,13 +34,3 @@ def draw_cards(surface, cards):
     # Отрисованы будут в конечном итоге только те карты, которые не перекрыты полностью другими картами
     for card in cards_for_display:
         surface.blit(card.image, card.rect)
-
-
-def draw_animations(animations):
-    tmp_animations = []
-    while animations:
-        animation = animations.pop()
-        animation.next_step()
-        if not animation.stop:
-            tmp_animations.append(animation)
-    animations.extend(tmp_animations)
