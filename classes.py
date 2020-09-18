@@ -60,7 +60,7 @@ class Deck:
         return len(self.cards) == 0
 
     @property
-    def coords(self):
+    def coords_for_append(self):
         return self.place_rect.x, self.place_rect.y
 
 
@@ -93,8 +93,31 @@ class Storage:
         return len(self.cards) == 0
 
     @property
-    def coords(self):
+    def coords_for_append(self):
         return self.place_rect.x, self.place_rect.y
+
+
+class WorkPool:
+
+    def __init__(self, x, y):
+        self.cards = []
+        self.place_rect = pg.Rect(x, y, CARD_W, CARD_H)
+
+    def draw_place(self, surface):
+        if self.cards:
+            return
+        pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
+
+    def accept_card(self, card):
+        _, line_for_append = self.coords_for_append()
+        card.z = len(self.cards)
+        card.rect.y = line_for_append
+        self.cards.append(card)
+
+    def coords_for_append(self, **kwargs):
+        count_param = kwargs.get('count')
+        count = count_param if count_param is not None else len(self.cards)
+        return self.place_rect.x, self.place_rect.y + (CARD_H // 3) * count
 
 
 class Animation:

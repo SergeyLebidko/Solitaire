@@ -1,4 +1,4 @@
-from settings import BACKGROUND_COLOR
+from settings import pg, BACKGROUND_COLOR, CARD_BORDER_COLOR
 
 
 def refresh_animations(animations):
@@ -34,3 +34,4 @@ def draw_cards(surface, cards):
     # Отрисованы будут в конечном итоге только те карты, которые не перекрыты полностью другими картами
     for card in cards_for_display:
         surface.blit(card.image, card.rect)
+        pg.draw.rect(surface, CARD_BORDER_COLOR, card.rect, 1)
