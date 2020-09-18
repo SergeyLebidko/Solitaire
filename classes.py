@@ -1,4 +1,5 @@
 import math
+import random
 
 from settings import pg, SOURCE_DIR, SUITS, RANKS
 
@@ -16,6 +17,7 @@ class Card:
         }
         self.rect = self._images['face'].get_rect()
         self.state = self.FACE_STATE
+        self.z = 0
 
     @property
     def image(self):
@@ -29,6 +31,9 @@ class Deck:
 
     def __init__(self):
         self.cards = [Card(rank, suit) for suit in SUITS for rank in RANKS]
+        random.shuffle(self.cards)
+        for z, card in enumerate(self.cards, 0):
+            card.z = z
 
 
 class Animation:
