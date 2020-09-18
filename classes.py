@@ -1,7 +1,7 @@
 import math
 import random
 
-from settings import pg, SOURCE_DIR, SUITS, RANKS, CARD_W, CARD_H, DECK_PLACE, STORAGE_PLACE, PLACE_COLOR
+from settings import pg, SOURCE_DIR, SUITS, RANKS, CARD_W, CARD_H, DECK_PLACE, STORAGE_PLACE, PLACE_COLOR, CARDS_COUNT
 
 
 class Card:
@@ -42,6 +42,27 @@ class Deck:
             return
         pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
 
+    def click(self, x_click, y_click):
+        return self.place_rect.collidepoint(x_click, y_click)
+
+    def get_card(self):
+        try:
+            return self.cards.pop()
+        except IndexError:
+            return None
+
+    def accept_card(self, card):
+        card.z = len(self.cards)
+        self.cards.append(card)
+
+    @property
+    def empty(self):
+        return len(self.cards) == 0
+
+    @property
+    def coords(self):
+        return self.place_rect.x, self.place_rect.y
+
 
 class Storage:
 
@@ -54,12 +75,34 @@ class Storage:
             return
         pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
 
+    def click(self, x_click, y_click):
+        return self.place_rect.collidepoint(x_click, y_click)
+
+    def get_card(self):
+        try:
+            return self.cards.pop()
+        except IndexError:
+            return None
+
+    def accept_card(self, card):
+        card.z = len(self.cards)
+        self.cards.append(card)
+
+    @property
+    def empty(self):
+        return len(self.cards) == 0
+
+    @property
+    def coords(self):
+        return self.place_rect.x, self.place_rect.y
+
 
 class Animation:
-    SPEED = 60
+    SPEED = 25
 
     def __init__(self, card, x_final, y_final, destination, delay=0, turn=False):
         self.card = card
+        self.card.z += CARDS_COUNT
         x0, y0 = card.rect.x, card.rect.y
         r = math.sqrt((x0 - x_final) ** 2 + (y0 - y_final) ** 2)
         steps_count = r / self.SPEED
@@ -95,7 +138,7 @@ class Animation:
         elif step['type'] == 'turn':
             self.card.turn()
         elif step['type'] == 'final':
-            step['destination'].accept(self.card)
+            step['destination'].accept_card(self.card)
 
     @property
     def stop(self):

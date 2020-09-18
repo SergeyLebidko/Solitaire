@@ -2,7 +2,7 @@ import sys
 
 from settings import pg, W, H, WINDOW_TITLE, FPS
 from functions import refresh_animations, draw_cards, draw_background, draw_places
-from classes import Deck, Storage
+from classes import Deck, Storage, Animation
 
 
 def main():
@@ -36,8 +36,17 @@ def main():
             if animations:
                 continue
 
-            if event.type == pg.MOUSEBUTTONDOWN:
-                pass
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == pg.BUTTON_LEFT:
+                if deck.click(*event.pos):
+                    if deck.empty:
+                        delay = 0
+                        while not storage.empty:
+                            card = storage.get_card()
+                            animations.append(Animation(card, *deck.coords, deck, delay=delay, turn=True))
+                            delay += 2
+                    else:
+                        card = deck.get_card()
+                        animations.append(Animation(card, *storage.coords, storage, turn=True))
 
         refresh_animations(animations)
         draw_background(sc)
