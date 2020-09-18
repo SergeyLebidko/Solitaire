@@ -1,9 +1,8 @@
 import sys
-import random
 
 from settings import pg, W, H, WINDOW_TITLE, FPS
-from functions import create_deck, refresh_animations, draw_cards, draw_background
-from classes import Animation
+from functions import draw_animations, draw_cards, draw_background
+from classes import Deck
 
 
 def main():
@@ -13,8 +12,8 @@ def main():
 
     clock = pg.time.Clock()
 
-    deck = create_deck()
-    cards = [random.choice(deck)]
+    deck = Deck()
+    cards = deck.cards[:]
     animations = []
 
     while True:
@@ -28,18 +27,12 @@ def main():
                 continue
 
             if event.type == pg.MOUSEBUTTONDOWN:
-                if event.button == pg.BUTTON_LEFT:
-                    animations.append(Animation(cards[0], *event.pos))
-                if event.button == pg.BUTTON_MIDDLE:
-                    animations.append(Animation(cards[0], *event.pos, delay=15))
-                if event.button == pg.BUTTON_RIGHT:
-                    animations.append(Animation(cards[0], *event.pos, turn=True))
-
-        if animations:
-            animations = refresh_animations(animations)
+                pass
 
         draw_background(sc)
         draw_cards(sc, cards)
+        draw_animations(animations)
+
         pg.display.update()
         clock.tick(FPS)
 

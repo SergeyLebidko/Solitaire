@@ -1,6 +1,6 @@
 import math
 
-from settings import pg, SOURCE_DIR
+from settings import pg, SOURCE_DIR, SUITS, RANKS
 
 
 class Card:
@@ -23,6 +23,12 @@ class Card:
 
     def turn(self):
         self.state = {self.FACE_STATE: self.SHIRT_STATE, self.SHIRT_STATE: self.FACE_STATE}[self.state]
+
+
+class Deck:
+
+    def __init__(self):
+        self.cards = [Card(rank, suit) for suit in SUITS for rank in RANKS]
 
 
 class Animation:

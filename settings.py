@@ -1,6 +1,6 @@
 import pygame as pg
 
-W, H = 1200, 800
+W, H = 1180, 792
 WINDOW_TITLE = "Solitaire"
 FPS = 60
 
