@@ -46,10 +46,7 @@ class Deck:
         return self.place_rect.collidepoint(x_click, y_click)
 
     def get_card(self):
-        try:
-            return self.cards.pop()
-        except IndexError:
-            return None
+        return self.cards.pop()
 
     def accept_card(self, card):
         card.z = len(self.cards)
@@ -79,10 +76,7 @@ class Storage:
         return self.place_rect.collidepoint(x_click, y_click)
 
     def get_card(self):
-        try:
-            return self.cards.pop()
-        except IndexError:
-            return None
+        return self.cards.pop()
 
     def accept_card(self, card):
         card.z = len(self.cards)
@@ -108,16 +102,40 @@ class WorkPool:
             return
         pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
 
+    def is_click(self, x_click, y_click):
+        for card in self.cards:
+            if card.state == Card.SHIRT_STATE:
+                continue
+            if card.rect.collidepoint(x_click, y_click):
+                return True
+        return False
+
     def accept_card(self, card):
         _, line_for_append = self.coords_for_append()
         card.z = len(self.cards)
         card.rect.y = line_for_append
         self.cards.append(card)
 
+    @property
+    def empty(self):
+        return len(self.cards) == 0
+
     def coords_for_append(self, count=None):
         if count is None:
             count = len(self.cards)
         return self.place_rect.x, self.place_rect.y + (CARD_H // 3) * count
+
+    def get_cards_for_click(self, x_click, y_click):
+        last_card_index = None
+        for index in range(len(self.cards)):
+            card = self.cards[index]
+            if card.state == Card.SHIRT_STATE:
+                continue
+            if card.rect.collidepoint(x_click, y_click):
+                last_card_index = index
+        result = self.cards[last_card_index:]
+        self.cards[last_card_index:] = []
+        return result
 
 
 class FinalPool:
@@ -131,18 +149,19 @@ class FinalPool:
             return
         pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
 
-    def is_click(self, x, y):
-        return self.place_rect.collidepoint(x, y)
+    def is_click(self, x_click, y_click):
+        return self.place_rect.collidepoint(x_click, y_click)
 
     def get_card(self):
-        try:
-            return self.cards.pop()
-        except IndexError:
-            return None
+        return self.cards.pop()
 
     def accept_card(self, card):
         card.z = len(self.cards)
         self.cards.append(card)
+
+    @property
+    def empty(self):
+        return len(self.cards) == 0
 
     def coords_for_append(self):
         return self.place_rect.x, self.place_rect.y
@@ -199,13 +218,54 @@ class Animation:
 class Drag:
 
     def __init__(self, storage, work_pools, final_pools):
-        pass
+        self.cards = []
+        self.source_place = None
 
-    def accept(self, x, y):
-        pass
+        self.storage = storage
+        self.work_pools = work_pools
+        self.final_pools = final_pools
+
+    def accept(self, x_click, y_click):
+        # Ищем место, на котором был сделан щелчок мышью
+        # Проверяем хранилище
+        if not self.storage.empty and self.storage.is_click(x_click, y_click):
+            card = self.storage.get_card()
+            card.z += CARDS_COUNT
+            self.cards = [card]
+            self.source_place = self.storage
+            return
+
+        # Проверяем конечные пулы
+        for pool in self.final_pools:
+            if pool.empty:
+                continue
+            if pool.is_click(x_click, y_click):
+                card = pool.get_card()
+                card.z += CARDS_COUNT
+                self.cards = [card]
+                self.source_place = pool
+                return
+
+        # Проверяем пулы с цепочками карт - "рабочие" пулы
+        for pool in self.work_pools:
+            if pool.empty:
+                continue
+            if pool.is_click(x_click, y_click):
+                self.cards = pool.get_cards_for_click(x_click, y_click)
+                for card in self.cards:
+                    card.z += CARDS_COUNT
+                    self.source_place = pool
+                    return
 
     def move(self, dx, dy):
-        pass
+        if not self.cards:
+            return
+        for card in self.cards:
+            card.rect.x, card.rect.y = card.rect.x + dx, card.rect.y + dy
 
-    def drop(self, x, y):
+    def drop(self, x_click, y_click):
+        if not self.cards:
+            return
+
+        # Проверяем, куда мы пытаемся положить карты
         pass
