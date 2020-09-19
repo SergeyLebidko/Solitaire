@@ -14,6 +14,8 @@ RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
 
 # noinspection SpellCheckingInspection
 SUITS = 'CBKP'
+RED_SUITS = 'CB'
+BLACK_SUITS = 'KP'
 
 CARDS_COUNT = len(RANKS) * len(SUITS)
 CARD_W, CARD_H = 88, 132

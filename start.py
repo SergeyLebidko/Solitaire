@@ -80,7 +80,7 @@ def main():
                 drag.move(*event.rel)
 
             if event.type == pg.MOUSEBUTTONUP and event.button == pg.BUTTON_LEFT:
-                drag.drop(*event.pos)
+                drag.drop()
 
         refresh_animations(animations)
         draw_background(sc)

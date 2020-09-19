@@ -1,7 +1,8 @@
 import math
 import random
 
-from settings import pg, SOURCE_DIR, SUITS, RANKS, CARD_W, CARD_H, DECK_PLACE, STORAGE_PLACE, PLACE_COLOR, CARDS_COUNT
+from settings import pg, SOURCE_DIR, SUITS, RANKS, CARD_W, CARD_H, DECK_PLACE, STORAGE_PLACE, PLACE_COLOR, CARDS_COUNT, \
+    RED_SUITS, BLACK_SUITS
 
 
 class Card:
@@ -103,6 +104,8 @@ class WorkPool:
         pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
 
     def is_click(self, x_click, y_click):
+        if self.empty:
+            return self.place_rect.collidepoint(x_click, y_click)
         for card in self.cards:
             if card.state == Card.SHIRT_STATE:
                 continue
@@ -137,6 +140,10 @@ class WorkPool:
         self.cards[last_card_index:] = []
         return result
 
+    @property
+    def last_card(self):
+        return self.cards[-1]
+
 
 class FinalPool:
 
@@ -165,6 +172,10 @@ class FinalPool:
 
     def coords_for_append(self):
         return self.place_rect.x, self.place_rect.y
+
+    @property
+    def last_card(self):
+        return self.cards[-1]
 
 
 class Animation:
@@ -254,18 +265,91 @@ class Drag:
                 self.cards = pool.get_cards_for_click(x_click, y_click)
                 for card in self.cards:
                     card.z += CARDS_COUNT
-                    self.source_place = pool
-                    return
+                self.source_place = pool
+                return
 
     def move(self, dx, dy):
         if not self.cards:
             return
         for card in self.cards:
-            card.rect.x, card.rect.y = card.rect.x + dx, card.rect.y + dy
+            card.rect.move_ip((dx, dy))
 
-    def drop(self, x_click, y_click):
+    def drop(self):
         if not self.cards:
             return
 
         # Проверяем, куда мы пытаемся положить карты
-        pass
+        # Сперва ищем угловые точки переносимых карт
+        anchor_points = self._create_anchor_points()
+
+        # Формируем список пулов под угловыми точками
+        anchor_pools = []
+        for x_anchor, y_anchor in anchor_points:
+            pool = self._get_pool_for_point(x_anchor, y_anchor)
+            if pool:
+                anchor_pools.append(pool)
+
+        # Ищем среди найденных пулов первый, который допускает перемещение карт в него
+        destination = None
+        for pool in anchor_pools:
+            if self._check_pool_for_append_card(pool):
+                destination = pool
+
+        # Создаем анимации перемещения карт
+        if destination:
+            # Если пул назначения существует, то перемещаем карты в него
+            pass
+        else:
+            # Если пул назначения не существует, то перемещаем карты в тот пул, из которого они были взяты
+            pass
+
+    def _create_anchor_points(self):
+        anchor_rect = self.cards[0].rect.copy()
+        anchor_rect.unionall_ip([card.rect for card in self.cards])
+        return [
+            (anchor_rect.x, anchor_rect.y),
+            anchor_rect.topright,
+            anchor_rect.bottomright,
+            anchor_rect.bottomleft
+        ]
+
+    def _get_pool_for_point(self, x, y):
+        for pool in self.work_pools + self.final_pools:
+            if pool.is_click(x, y):
+                return pool
+        return None
+
+    def _check_pool_for_append_card(self, pool):
+        card = self.cards[0]
+
+        if isinstance(pool, WorkPool):
+            if pool.empty:
+                if card.rank != 'K':
+                    return False
+            else:
+                if card.rank == 'A':
+                    return False
+                rank_diff = RANKS.index(pool.last_card.rank) - RANKS.index(pool.last_card.rank)
+                last_card_in_red = pool.last_card.suit in RED_SUITS
+                last_card_in_black = pool.last_card.suit in BLACK_SUITS
+                card_in_red = card.suit in RED_SUITS
+                card_in_black = card.suit in BLACK_SUITS
+                if rank_diff != 1:
+                    return False
+                if not ((last_card_in_red and card_in_black) or (last_card_in_black and card_in_red)):
+                    return False
+            return True
+
+        elif isinstance(pool, FinalPool):
+            if len(self.cards) > 1:
+                return False
+            if pool.empty:
+                if card.rank != 'A':
+                    return False
+            else:
+                rank_diff = RANKS.index(pool.last_card.rank) - RANKS.index(pool.last_card.rank)
+                if rank_diff != 1:
+                    return False
+                if pool.last_card.suit != card.suit:
+                    return False
+            return True
