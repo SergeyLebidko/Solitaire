@@ -2,7 +2,7 @@ import sys
 
 from settings import pg, W, H, WINDOW_TITLE, FPS, WORK_POOLS_LINE, CARD_W
 from functions import refresh_animations, draw_cards, draw_background, draw_places
-from classes import Deck, Storage, Animation, WorkPool, FinalPool
+from classes import Deck, Storage, Animation, WorkPool, FinalPool, Drag
 
 
 def main():
@@ -49,6 +49,9 @@ def main():
                 animations.append(Animation(card, *pool.coords_for_append(count=index), pool, delay=delay))
             delay += 4
 
+    # Объект для реализации drag'n'drop
+    drag = Drag(storage, work_pools, final_pools)
+
     while True:
         events = pg.event.get()
         for event in events:
@@ -70,6 +73,14 @@ def main():
                     else:
                         card = deck.get_card()
                         animations.append(Animation(card, *storage.coords_for_append, storage, turn=True))
+                else:
+                    drag.accept(*event.pos)
+
+            if event.type == pg.MOUSEMOTION:
+                drag.move(*event.rel)
+
+            if event.type == pg.MOUSEBUTTONUP and event.button == pg.BUTTON_LEFT:
+                drag.drop(*event.pos)
 
         refresh_animations(animations)
         draw_background(sc)

@@ -194,3 +194,18 @@ class Animation:
     @property
     def stop(self):
         return not self.steps
+
+
+class Drag:
+
+    def __init__(self, storage, work_pools, final_pools):
+        pass
+
+    def accept(self, x, y):
+        pass
+
+    def move(self, dx, dy):
+        pass
+
+    def drop(self, x, y):
+        pass
