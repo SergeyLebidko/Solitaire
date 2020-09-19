@@ -42,7 +42,7 @@ class Deck:
             return
         pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
 
-    def click(self, x_click, y_click):
+    def is_click(self, x_click, y_click):
         return self.place_rect.collidepoint(x_click, y_click)
 
     def get_card(self):
@@ -75,7 +75,7 @@ class Storage:
             return
         pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
 
-    def click(self, x_click, y_click):
+    def is_click(self, x_click, y_click):
         return self.place_rect.collidepoint(x_click, y_click)
 
     def get_card(self):
@@ -114,10 +114,38 @@ class WorkPool:
         card.rect.y = line_for_append
         self.cards.append(card)
 
-    def coords_for_append(self, **kwargs):
-        count_param = kwargs.get('count')
-        count = count_param if count_param is not None else len(self.cards)
+    def coords_for_append(self, count=None):
+        if count is None:
+            count = len(self.cards)
         return self.place_rect.x, self.place_rect.y + (CARD_H // 3) * count
+
+
+class FinalPool:
+
+    def __init__(self, x, y):
+        self.cards = []
+        self.place_rect = pg.Rect(x, y, CARD_W, CARD_H)
+
+    def draw_place(self, surface):
+        if self.cards:
+            return
+        pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
+
+    def is_click(self, x, y):
+        return self.place_rect.collidepoint(x, y)
+
+    def get_card(self):
+        try:
+            return self.cards.pop()
+        except IndexError:
+            return None
+
+    def accept_card(self, card):
+        card.z = len(self.cards)
+        self.cards.append(card)
+
+    def coords_for_append(self):
+        return self.place_rect.x, self.place_rect.y
 
 
 class Animation:

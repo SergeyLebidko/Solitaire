@@ -2,7 +2,7 @@ import sys
 
 from settings import pg, W, H, WINDOW_TITLE, FPS, WORK_POOLS_LINE, CARD_W
 from functions import refresh_animations, draw_cards, draw_background, draw_places
-from classes import Deck, Storage, Animation, WorkPool
+from classes import Deck, Storage, Animation, WorkPool, FinalPool
 
 
 def main():
@@ -25,9 +25,15 @@ def main():
     for index in range(7):
         work_pools.append(WorkPool(150 + index * (3 * CARD_W // 2), WORK_POOLS_LINE))
 
+    # Список пулов назначения
+    final_pools = []
+    for index in range(4):
+        final_pools.append(FinalPool(546 + index * (3 * CARD_W // 2), 44))
+
     # Список мест на столе, на которых могут лежать карты
     places = [deck, storage]
     places.extend(work_pools)
+    places.extend(final_pools)
 
     # Список активных анимаций
     animations = []
@@ -54,7 +60,7 @@ def main():
                 continue
 
             if event.type == pg.MOUSEBUTTONDOWN and event.button == pg.BUTTON_LEFT:
-                if deck.click(*event.pos):
+                if deck.is_click(*event.pos):
                     if deck.empty:
                         delay = 0
                         while not storage.empty:
