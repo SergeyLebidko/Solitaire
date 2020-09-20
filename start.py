@@ -50,7 +50,7 @@ def main():
             delay += 4
 
     # Объект для реализации drag'n'drop
-    drag = Drag(storage, work_pools, final_pools)
+    drag = Drag(storage, work_pools, final_pools, animations)
 
     while True:
         events = pg.event.get()
@@ -68,11 +68,11 @@ def main():
                         delay = 0
                         while not storage.empty:
                             card = storage.get_card()
-                            animations.append(Animation(card, *deck.coords_for_append, deck, delay=delay, turn=True))
+                            animations.append(Animation(card, *deck.coords_for_append(), deck, delay=delay, turn=True))
                             delay += 2
                     else:
                         card = deck.get_card()
-                        animations.append(Animation(card, *storage.coords_for_append, storage, turn=True))
+                        animations.append(Animation(card, *storage.coords_for_append(), storage, turn=True))
                 else:
                     drag.accept(*event.pos)
 

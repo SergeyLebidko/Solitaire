@@ -1,8 +1,8 @@
 import math
 import random
 
-from settings import pg, SOURCE_DIR, SUITS, RANKS, CARD_W, CARD_H, DECK_PLACE, STORAGE_PLACE, PLACE_COLOR, CARDS_COUNT, \
-    RED_SUITS, BLACK_SUITS
+from settings import pg, SOURCE_DIR, SUITS, RANKS, CARD_W, CARD_H, DECK_PLACE, STORAGE_PLACE, PLACE_COLOR, \
+    CARDS_COUNT, RED_SUITS, BLACK_SUITS
 
 
 class Card:
@@ -32,11 +32,11 @@ class Deck:
 
     def __init__(self):
         self.cards = [Card(rank, suit) for suit in SUITS for rank in RANKS]
+        self.place_rect = pg.Rect(*DECK_PLACE, CARD_W, CARD_H)
         random.shuffle(self.cards)
         for z, card in enumerate(self.cards, 0):
             card.z = z
             card.rect.x, card.rect.y = DECK_PLACE
-        self.place_rect = pg.Rect(*DECK_PLACE, CARD_W, CARD_H)
 
     def draw_place(self, surface):
         if self.cards:
@@ -57,7 +57,6 @@ class Deck:
     def empty(self):
         return len(self.cards) == 0
 
-    @property
     def coords_for_append(self):
         return self.place_rect.x, self.place_rect.y
 
@@ -87,7 +86,6 @@ class Storage:
     def empty(self):
         return len(self.cards) == 0
 
-    @property
     def coords_for_append(self):
         return self.place_rect.x, self.place_rect.y
 
@@ -144,6 +142,10 @@ class WorkPool:
     def last_card(self):
         return self.cards[-1]
 
+    @property
+    def size(self):
+        return len(self.cards)
+
 
 class FinalPool:
 
@@ -179,14 +181,21 @@ class FinalPool:
 
 
 class Animation:
-    SPEED = 25
+    SPEED_1 = 25
+    SPEED_2 = 50
+    SPEED_3 = 75
 
     def __init__(self, card, x_final, y_final, destination, delay=0, turn=False):
         self.card = card
         self.card.z += CARDS_COUNT
         x0, y0 = card.rect.x, card.rect.y
         r = math.sqrt((x0 - x_final) ** 2 + (y0 - y_final) ** 2)
-        steps_count = r / self.SPEED
+        if r < (CARD_H * 2):
+            steps_count = r / self.SPEED_1
+        elif CARD_H <= r <= (CARD_H * 4):
+            steps_count = r / self.SPEED_2
+        else:
+            steps_count = r / self.SPEED_3
 
         # Добавляем задержку (если она есть)
         self.steps = []
@@ -228,13 +237,14 @@ class Animation:
 
 class Drag:
 
-    def __init__(self, storage, work_pools, final_pools):
+    def __init__(self, storage, work_pools, final_pools, animations):
         self.cards = []
         self.source_place = None
 
         self.storage = storage
         self.work_pools = work_pools
         self.final_pools = final_pools
+        self.animations = animations
 
     def accept(self, x_click, y_click):
         # Ищем место, на котором был сделан щелчок мышью
@@ -290,18 +300,27 @@ class Drag:
                 anchor_pools.append(pool)
 
         # Ищем среди найденных пулов первый, который допускает перемещение карт в него
-        destination = None
+        destination_place = None
         for pool in anchor_pools:
             if self._check_pool_for_append_card(pool):
-                destination = pool
+                destination_place = pool
+                break
 
         # Создаем анимации перемещения карт
-        if destination:
+        if destination_place:
             # Если пул назначения существует, то перемещаем карты в него
-            pass
+            animations = self._create_animations(destination_place)
+
+            # Если нужно - переворачиваем последнюю карту в "рабочем" пуле
+            if isinstance(self.source_place, WorkPool) and not self.source_place.empty:
+                if self.source_place.last_card.state == Card.SHIRT_STATE:
+                    self.source_place.last_card.turn()
         else:
             # Если пул назначения не существует, то перемещаем карты в тот пул, из которого они были взяты
-            pass
+            animations = self._create_animations(self.source_place)
+
+        self.animations.extend(animations)
+        self.cards = []
 
     def _create_anchor_points(self):
         anchor_rect = self.cards[0].rect.copy()
@@ -329,7 +348,7 @@ class Drag:
             else:
                 if card.rank == 'A':
                     return False
-                rank_diff = RANKS.index(pool.last_card.rank) - RANKS.index(pool.last_card.rank)
+                rank_diff = RANKS.index(pool.last_card.rank) - RANKS.index(card.rank)
                 last_card_in_red = pool.last_card.suit in RED_SUITS
                 last_card_in_black = pool.last_card.suit in BLACK_SUITS
                 card_in_red = card.suit in RED_SUITS
@@ -338,6 +357,7 @@ class Drag:
                     return False
                 if not ((last_card_in_red and card_in_black) or (last_card_in_black and card_in_red)):
                     return False
+
             return True
 
         elif isinstance(pool, FinalPool):
@@ -347,9 +367,26 @@ class Drag:
                 if card.rank != 'A':
                     return False
             else:
-                rank_diff = RANKS.index(pool.last_card.rank) - RANKS.index(pool.last_card.rank)
+                rank_diff = RANKS.index(card.rank) - RANKS.index(pool.last_card.rank)
                 if rank_diff != 1:
                     return False
                 if pool.last_card.suit != card.suit:
                     return False
+
             return True
+
+    def _create_animations(self, destination_place):
+        result = []
+        if isinstance(destination_place, WorkPool):
+            count = destination_place.size + 1
+            for card in self.cards:
+                coords_for_append = destination_place.coords_for_append(count=count)
+                result.append(Animation(card, *coords_for_append, destination_place))
+                count += 1
+
+        elif isinstance(destination_place, FinalPool) or isinstance(destination_place, Storage):
+            card = self.cards[0]
+            coords_for_append = destination_place.coords_for_append()
+            result.append(Animation(card, *coords_for_append, destination_place))
+
+        return result

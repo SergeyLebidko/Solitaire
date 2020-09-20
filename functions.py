@@ -4,7 +4,7 @@ from settings import pg, BACKGROUND_COLOR, CARD_BORDER_COLOR
 def refresh_animations(animations):
     tmp_animations = []
     while animations:
-        animation = animations.pop()
+        animation = animations.pop(0)
         animation.next_step()
         if not animation.stop:
             tmp_animations.append(animation)
