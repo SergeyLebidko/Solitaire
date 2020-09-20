@@ -28,21 +28,29 @@ class Card:
         self.state = {self.FACE_STATE: self.SHIRT_STATE, self.SHIRT_STATE: self.FACE_STATE}[self.state]
 
 
-class Deck:
+class BasePlace:
 
     def __init__(self):
-        self.cards = [Card(rank, suit) for suit in SUITS for rank in RANKS]
-        self.place_rect = pg.Rect(*DECK_PLACE, CARD_W, CARD_H)
+        self.cards = []
+        self.place_rect = pg.Rect(0, 0, CARD_W, CARD_H)
+
+    def draw_place(self, surface):
+        if self.cards:
+            return
+        pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
+
+
+class Deck(BasePlace):
+
+    def __init__(self):
+        super(Deck, self).__init__()
+        self.cards.extend([Card(rank, suit) for suit in SUITS for rank in RANKS])
+        self.place_rect.x, self.place_rect.y = DECK_PLACE
         random.shuffle(self.cards)
         for z, card in enumerate(self.cards, 0):
             card.z = z
             card.rect.x, card.rect.y = DECK_PLACE
 
-    def draw_place(self, surface):
-        if self.cards:
-            return
-        pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
-
     def is_click(self, x_click, y_click):
         return self.place_rect.collidepoint(x_click, y_click)
 
@@ -61,16 +69,11 @@ class Deck:
         return self.place_rect.x, self.place_rect.y
 
 
-class Storage:
+class Storage(BasePlace):
 
     def __init__(self):
-        self.cards = []
-        self.place_rect = pg.Rect(*STORAGE_PLACE, CARD_W, CARD_H)
-
-    def draw_place(self, surface):
-        if self.cards:
-            return
-        pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
+        super(Storage, self).__init__()
+        self.place_rect.x, self.place_rect.y = STORAGE_PLACE
 
     def is_click(self, x_click, y_click):
         return self.place_rect.collidepoint(x_click, y_click)
@@ -90,16 +93,11 @@ class Storage:
         return self.place_rect.x, self.place_rect.y
 
 
-class WorkPool:
+class WorkPool(BasePlace):
 
     def __init__(self, x, y):
-        self.cards = []
-        self.place_rect = pg.Rect(x, y, CARD_W, CARD_H)
-
-    def draw_place(self, surface):
-        if self.cards:
-            return
-        pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
+        super(WorkPool, self).__init__()
+        self.place_rect.x, self.place_rect.y = x, y
 
     def is_click(self, x_click, y_click):
         if self.empty:
@@ -147,16 +145,11 @@ class WorkPool:
         return len(self.cards)
 
 
-class FinalPool:
+class FinalPool(BasePlace):
 
     def __init__(self, x, y):
-        self.cards = []
-        self.place_rect = pg.Rect(x, y, CARD_W, CARD_H)
-
-    def draw_place(self, surface):
-        if self.cards:
-            return
-        pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
+        super(FinalPool, self).__init__()
+        self.place_rect.x, self.place_rect.y = x, y
 
     def is_click(self, x_click, y_click):
         return self.place_rect.collidepoint(x_click, y_click)
