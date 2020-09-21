@@ -1,6 +1,6 @@
 import sys
 
-from settings import pg, W, H, WINDOW_TITLE, FPS, WORK_POOLS_LINE, CARD_W
+from settings import pg, W, H, WINDOW_TITLE, FPS, CARD_W, WORK_POOLS_ANCHOR, FINAL_POOLS_ANCHOR
 from functions import refresh_animations, draw_cards, draw_background, draw_places
 from classes import Deck, Storage, Animation, WorkPool, FinalPool, Drag
 
@@ -21,14 +21,14 @@ def main():
     storage = Storage()
 
     # Список рабочих пулов
-    work_pools = []
+    work_pools, work_pools_x_start, work_pools_y_start = [], *WORK_POOLS_ANCHOR
     for index in range(7):
-        work_pools.append(WorkPool(150 + index * (3 * CARD_W // 2), WORK_POOLS_LINE))
+        work_pools.append(WorkPool(work_pools_x_start + index * (3 * CARD_W // 2), work_pools_y_start))
 
     # Список пулов назначения
-    final_pools = []
+    final_pools, final_pool_x_start, final_pools_y_start = [], *FINAL_POOLS_ANCHOR
     for index in range(4):
-        final_pools.append(FinalPool(546 + index * (3 * CARD_W // 2), 44))
+        final_pools.append(FinalPool(final_pool_x_start + index * (3 * CARD_W // 2), final_pools_y_start))
 
     # Список мест на столе, на которых могут лежать карты
     places = [deck, storage]
