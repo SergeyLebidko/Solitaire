@@ -39,6 +39,31 @@ class BasePlace:
             return
         pg.draw.rect(surface, PLACE_COLOR, self.place_rect)
 
+    def get_card(self):
+        return self.cards.pop()
+
+    def accept_card(self, card):
+        card.z = len(self.cards)
+        self.cards.append(card)
+
+    def is_click(self, x_click, y_click):
+        return self.place_rect.collidepoint(x_click, y_click)
+
+    def coords_for_append(self):
+        return self.place_rect.x, self.place_rect.y
+
+    @property
+    def empty(self):
+        return len(self.cards) == 0
+
+    @property
+    def last_card(self):
+        return self.cards[-1]
+
+    @property
+    def size(self):
+        return len(self.cards)
+
 
 class Deck(BasePlace):
 
@@ -51,46 +76,12 @@ class Deck(BasePlace):
             card.z = z
             card.rect.x, card.rect.y = DECK_PLACE
 
-    def is_click(self, x_click, y_click):
-        return self.place_rect.collidepoint(x_click, y_click)
-
-    def get_card(self):
-        return self.cards.pop()
-
-    def accept_card(self, card):
-        card.z = len(self.cards)
-        self.cards.append(card)
-
-    @property
-    def empty(self):
-        return len(self.cards) == 0
-
-    def coords_for_append(self):
-        return self.place_rect.x, self.place_rect.y
-
 
 class Storage(BasePlace):
 
     def __init__(self):
         super(Storage, self).__init__()
         self.place_rect.x, self.place_rect.y = STORAGE_PLACE
-
-    def is_click(self, x_click, y_click):
-        return self.place_rect.collidepoint(x_click, y_click)
-
-    def get_card(self):
-        return self.cards.pop()
-
-    def accept_card(self, card):
-        card.z = len(self.cards)
-        self.cards.append(card)
-
-    @property
-    def empty(self):
-        return len(self.cards) == 0
-
-    def coords_for_append(self):
-        return self.place_rect.x, self.place_rect.y
 
 
 class WorkPool(BasePlace):
@@ -115,10 +106,6 @@ class WorkPool(BasePlace):
         card.rect.y = line_for_append
         self.cards.append(card)
 
-    @property
-    def empty(self):
-        return len(self.cards) == 0
-
     def coords_for_append(self, count=None):
         if count is None:
             count = len(self.cards)
@@ -136,41 +123,12 @@ class WorkPool(BasePlace):
         self.cards[last_card_index:] = []
         return result
 
-    @property
-    def last_card(self):
-        return self.cards[-1]
-
-    @property
-    def size(self):
-        return len(self.cards)
-
 
 class FinalPool(BasePlace):
 
     def __init__(self, x, y):
         super(FinalPool, self).__init__()
         self.place_rect.x, self.place_rect.y = x, y
-
-    def is_click(self, x_click, y_click):
-        return self.place_rect.collidepoint(x_click, y_click)
-
-    def get_card(self):
-        return self.cards.pop()
-
-    def accept_card(self, card):
-        card.z = len(self.cards)
-        self.cards.append(card)
-
-    @property
-    def empty(self):
-        return len(self.cards) == 0
-
-    def coords_for_append(self):
-        return self.place_rect.x, self.place_rect.y
-
-    @property
-    def last_card(self):
-        return self.cards[-1]
 
 
 class Animation:
