@@ -1,7 +1,7 @@
 import math
 import random
 
-from settings import pg, SOURCE_DIR, SUITS, RANKS, CARD_W, CARD_H, DECK_PLACE, STORAGE_PLACE, PLACE_COLOR, \
+from settings import pg, H, SOURCE_DIR, SUITS, RANKS, CARD_W, CARD_H, DECK_PLACE, STORAGE_PLACE, PLACE_COLOR, \
     CARDS_COUNT, RED_SUITS, BLACK_SUITS
 
 
@@ -89,6 +89,7 @@ class WorkPool(BasePlace):
     def __init__(self, x, y):
         super(WorkPool, self).__init__()
         self.place_rect.x, self.place_rect.y = x, y
+        self.delta_line = CARD_H // 3
 
     def is_click(self, x_click, y_click):
         if self.empty:
@@ -105,11 +106,12 @@ class WorkPool(BasePlace):
         card.z = len(self.cards)
         card.rect.y = line_for_append
         self.cards.append(card)
+        self._refresh_card_coords()
 
     def coords_for_append(self, count=None):
         if count is None:
-            count = len(self.cards)
-        return self.place_rect.x, self.place_rect.y + (CARD_H // 3) * count
+            count = self.size
+        return self.place_rect.x, self.place_rect.y + self.delta_line * count
 
     def get_cards_for_click(self, x_click, y_click):
         last_card_index = None
@@ -121,7 +123,19 @@ class WorkPool(BasePlace):
                 last_card_index = index
         result = self.cards[last_card_index:]
         self.cards[last_card_index:] = []
+        self._refresh_card_coords()
         return result
+
+    def _refresh_card_coords(self):
+        if self.size <= 1:
+            self.delta_line = CARD_H // 3
+            return
+
+        self.delta_line = (H - CARD_H // 3 - CARD_H - self.place_rect.y) // (self.size - 1)
+        if self.delta_line > (CARD_H // 3):
+            self.delta_line = CARD_H // 3
+        for card_number, card in enumerate(self.cards, 0):
+            card.rect.y = self.place_rect.y + self.delta_line * card_number
 
 
 class FinalPool(BasePlace):
@@ -197,6 +211,8 @@ class Drag:
         self.final_pools = final_pools
         self.animations = animations
 
+        self.delta_line = CARD_H // 3
+
     def accept(self, x_click, y_click):
         # Ищем место, на котором был сделан щелчок мышью
         # Проверяем хранилище
@@ -226,6 +242,7 @@ class Drag:
                 self.cards = pool.get_cards_for_click(x_click, y_click)
                 for card in self.cards:
                     card.z += CARDS_COUNT
+                self._refresh_card_coords()
                 self.source_place = pool
                 return
 
@@ -341,3 +358,7 @@ class Drag:
             result.append(Animation(card, *coords_for_append, destination_place))
 
         return result
+
+    def _refresh_card_coords(self):
+        for card_number, card in enumerate(self.cards, 0):
+            card.rect.y = self.cards[0].rect.y + self.delta_line * card_number
