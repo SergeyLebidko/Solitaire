@@ -352,7 +352,7 @@ class Drag:
     def _create_animations(self, destination_place):
         result = []
         if isinstance(destination_place, WorkPool):
-            count = destination_place.size + 1
+            count = destination_place.size
             for card in self.cards:
                 coords_for_append = destination_place.coords_for_append(count=count)
                 result.append(Animation(card, *coords_for_append, destination_place))
