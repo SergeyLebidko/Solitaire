@@ -1,4 +1,5 @@
 from settings import pg, BACKGROUND_COLOR, CARD_BORDER_COLOR
+from classes import Animation, Card
 
 
 def refresh_animations(animations):
@@ -35,3 +36,29 @@ def draw_cards(surface, cards):
     for card in cards_for_display:
         surface.blit(card.image, card.rect)
         pg.draw.rect(surface, CARD_BORDER_COLOR, card.rect, 1)
+
+
+def deal_cards(deck, work_pools, animations):
+    deck.shuffle()
+    delay = 0
+    for number, pool in enumerate(work_pools, 1):
+        for index in range(number):
+            card = deck.get_card()
+            if index == (number - 1):
+                animations.append(Animation(card, *pool.coords_for_append(count=index), pool, delay=delay, turn=True))
+            else:
+                animations.append(Animation(card, *pool.coords_for_append(count=index), pool, delay=delay))
+            delay += 4
+
+
+def collect_cards(deck, storage, work_pools, final_pools, animations):
+    delay = 0
+    deck_coords = deck.coords_for_append()
+    for pool in [storage] + work_pools + final_pools:
+        while not pool.empty:
+            card = pool.get_card()
+            if card.state == Card.SHIRT_STATE:
+                animations.append(Animation(card, *deck_coords, deck, delay=delay))
+            else:
+                animations.append(Animation(card, *deck_coords, deck, delay=delay, turn=True))
+            delay += 4

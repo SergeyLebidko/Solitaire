@@ -1,7 +1,7 @@
 import sys
 
-from settings import pg, W, H, WINDOW_TITLE, FPS, CARD_W, WORK_POOLS_ANCHOR, FINAL_POOLS_ANCHOR
-from functions import refresh_animations, draw_cards, draw_background, draw_places
+from settings import pg, W, H, WINDOW_TITLE, FPS, CARD_W, WORK_POOLS_ANCHOR, FINAL_POOLS_ANCHOR, CARDS_COUNT
+from functions import refresh_animations, draw_cards, draw_background, draw_places, deal_cards, collect_cards
 from classes import Deck, Storage, Animation, WorkPool, FinalPool, Drag
 
 
@@ -39,18 +39,13 @@ def main():
     animations = []
 
     # Первые анимации - раздача карт в рабочие пулы
-    delay = 0
-    for number, pool in enumerate(work_pools, 1):
-        for index in range(number):
-            card = deck.get_card()
-            if index == (number - 1):
-                animations.append(Animation(card, *pool.coords_for_append(count=index), pool, delay=delay, turn=True))
-            else:
-                animations.append(Animation(card, *pool.coords_for_append(count=index), pool, delay=delay))
-            delay += 4
+    deal_cards(deck, work_pools, animations)
 
     # Объект для реализации drag'n'drop
     drag = Drag(storage, work_pools, final_pools, animations)
+
+    # Флаг раздачи карт после завершения всех анимаций
+    deal_after_animations = False
 
     while True:
         events = pg.event.get()
@@ -61,6 +56,11 @@ def main():
 
             if animations:
                 continue
+
+            # Если нажата клавиша "Пробел", то собираем карты, перемешиваем колоду и создаем новую раскладку
+            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                collect_cards(deck, storage, work_pools, final_pools, animations)
+                deal_after_animations = True
 
             if event.type == pg.MOUSEBUTTONDOWN and event.button == pg.BUTTON_LEFT:
                 if deck.is_click(*event.pos):
@@ -83,6 +83,10 @@ def main():
                 drag.drop()
 
         refresh_animations(animations)
+        if not animations and deal_after_animations:
+            deal_cards(deck, work_pools, animations)
+            deal_after_animations = False
+
         draw_background(sc)
         draw_places(sc, places)
         draw_cards(sc, cards)

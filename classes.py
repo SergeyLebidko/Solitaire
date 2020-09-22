@@ -9,7 +9,7 @@ class Card:
     FACE_STATE = 'face'
     SHIRT_STATE = 'shirt'
 
-    def __init__(self, rank, suit):
+    def __init__(self, rank, suit, z):
         self.rank = rank
         self.suit = suit
         self._images = {
@@ -18,7 +18,7 @@ class Card:
         }
         self.rect = self._images[self.SHIRT_STATE].get_rect()
         self.state = self.SHIRT_STATE
-        self.z = 0
+        self.z = z
 
     @property
     def image(self):
@@ -69,8 +69,14 @@ class Deck(BasePlace):
 
     def __init__(self):
         super(Deck, self).__init__()
-        self.cards.extend([Card(rank, suit) for suit in SUITS for rank in RANKS])
+        z = 0
+        for suit in SUITS:
+            for rank in RANKS:
+                self.cards.append(Card(rank, suit, z))
+                z += 1
         self.place_rect.x, self.place_rect.y = DECK_PLACE
+
+    def shuffle(self):
         random.shuffle(self.cards)
         for z, card in enumerate(self.cards, 0):
             card.z = z
